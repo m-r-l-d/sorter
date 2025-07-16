@@ -1,7 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import "./App.css";
 import { generate } from "./sort";
-import test from "./assets/test.png";
+
+const checkArr = [true, false];
+const optsArr = ["l", "h", "s", "r", "g", "b", "rand", "n"];
 
 function ImageWrapper(props) {
   const { loading, canvasRef } = props;
@@ -9,7 +11,6 @@ function ImageWrapper(props) {
   // const height = image ? image.height : 250;
   return (
     <div className="image-wrapper">
-      {loading && <p>Loading...</p>}
       {/* {image && <img className="image" src={image} />} */}
       <canvas id="canvas" ref={canvasRef} />
     </div>
@@ -18,7 +19,6 @@ function ImageWrapper(props) {
 
 function App() {
   const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState(null);
   const [rand, setRand] = useState(true);
   const [ratio, setRatio] = useState(1);
   const [opt1, setOpt1] = useState("h");
@@ -26,10 +26,9 @@ function App() {
   const [opt3, setOpt3] = useState("g");
   const canvasRef = useRef(null);
 
-  // load source image
-  useEffect(() => {
+  function handleLoadImage(e) {
+    const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
-      setLoading(true);
       const fr = new FileReader();
       fr.onload = () => {
         let img = new Image();
@@ -41,29 +40,36 @@ function App() {
           ctx.drawImage(img, 0, 0);
         };
         img.onerror = () => {
-          console.error('Error loading image');
-        }
+          console.error("Error loading image");
+        };
         img.src = fr.result;
       };
       fr.readAsDataURL(file);
-      setLoading(false);
     }
-  }, [file]);
+  }
 
   const sortImage = async () => {
     setLoading(true);
-    setFile(await generate(rand, opt1, opt2, opt3, ratio));
+    let canvas = canvasRef.current;
+    await generate(canvas, rand, opt1, opt2, opt3, ratio);
     setLoading(false);
   };
 
-  const randomizeOpts = () => {
-    const checkArr = [true, false];
-    const optsArr = ["l", "h", "s", "r", "g", "b", "rand", "n"];
+  const randomizeOpts = async () => {
+    const newRand = checkArr[Math.floor(Math.random() * checkArr.length)];
+    const newOpt1 = optsArr[Math.floor(Math.random() * optsArr.length)];
+    const newOpt2 = optsArr[Math.floor(Math.random() * optsArr.length)];
+    const newOpt3 = optsArr[Math.floor(Math.random() * optsArr.length)];
 
-    setRand(checkArr[Math.floor(Math.random() * checkArr.length)]);
-    setOpt1(optsArr[Math.floor(Math.random() * optsArr.length)]);
-    setOpt2(optsArr[Math.floor(Math.random() * optsArr.length)]);
-    setOpt3(optsArr[Math.floor(Math.random() * optsArr.length)]);
+    setRand(newRand);
+    setOpt1(newOpt1);
+    setOpt2(newOpt2);
+    setOpt3(newOpt3);
+
+    setLoading(true);
+    let canvas = canvasRef.current;
+    await generate(canvas, newRand, newOpt1, newOpt2, newOpt3, ratio);
+    setLoading(false);
   };
 
   return (
@@ -85,15 +91,33 @@ function App() {
             type="file"
             id="fileInput"
             accept="image/png"
-            onChange={(e) => setFile(e.target.files[0])}
+            onChange={handleLoadImage}
           />
-          <div>load image</div>
-          <div>load image</div>
+          <label style={{ display: "block" }}>
+            <input
+              type="range"
+              min="0.2"
+              max="1"
+              step=".05"
+              value={ratio}
+              onChange={(e) => setRatio(e.target.value)}
+            />
+            W / H : {ratio}
+          </label>
         </div>
         <div className="sort-tools">
           <h2>sort tools</h2>
           <div className="select-wrapper">
             <label>Sort options</label>
+            <label style={{ display: "block" }}>
+              <input
+                type="checkbox"
+                checked={rand}
+                onChange={() => setRand(!rand)}
+                style={{ marginRight: "1em" }}
+              />
+              Randomize pixels before sorting
+            </label>
             <select
               name="option1"
               value={opt1}
@@ -138,38 +162,17 @@ function App() {
             </select>
           </div>
           <hr />
-          <div style={{ display: "block", margin: "1em 0 0 0" }}>
-            <label style={{ display: "block" }}>
-              <input
-                type="range"
-                min="0.2"
-                max="1"
-                step=".05"
-                value={ratio}
-                onChange={(e) => setRatio(e.target.value)}
-              />
-              W / H : {ratio}
-            </label>
-            <label style={{ display: "block" }}>
-              <input
-                type="checkbox"
-                checked={rand}
-                onChange={() => setRand(!rand)}
-                style={{ marginRight: "1em" }}
-              />
-              Randomize before sorting
-            </label>
-          </div>
           <div style={{ alignContent: "center" }}>
+            <button onClick={() => sortImage()} style={{ display: "block" }}>
+              Sort with selected options
+            </button>
             <button
               onClick={() => randomizeOpts()}
               style={{ display: "block", margin: "0 0 1em 0" }}
             >
-              Randomize
+              Sort with random options
             </button>
-            <button onClick={() => sortImage()} style={{ display: "block" }}>
-              GO!
-            </button>
+            {loading && <p>Loading...</p>}
           </div>
         </div>
         <div className="image-container">

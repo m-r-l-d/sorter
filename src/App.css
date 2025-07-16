@@ -45,6 +45,7 @@ canvas {
   border-color: darkred;
   border-style: solid;
   grid-area: canvas-tools;
+  padding: 1em 0.5em;
 }
 
 .sort-tools {
@@ -63,9 +64,32 @@ canvas {
 @media (max-width: 768px) {
   .container {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-gap: 0.5em;
     grid-template-areas:
       "canvas-tools"
       "sort-tools"
       "image-container";
+  }
+
+  .canvas-tools {
+    border-color: darkred;
+    border-style: solid;
+    grid-area: canvas-tools;
+    place-items: center;
+  }
+
+  .sort-tools {
+    border-color: darkgreen;
+    border-style: solid;
+    grid-area: sort-tools;
+    place-items: center;
+  }
+
+  .image-container {
+    border-color: darkblue;
+    border-style: solid;
+    grid-area: image-container;
+    place-items: center;
   }
 }

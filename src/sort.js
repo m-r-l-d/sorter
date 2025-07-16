@@ -8,61 +8,14 @@ import {
   mergeSortL,
 } from "./mergeUtils";
 
-var canvas = null;
-var ctx = null;
-var imageData = null;
-var pixels = [];
+var canvas, ctx, imageData, pixels = null;
 var bgColor = [255, 255, 255];
 
-function initialize() {
-  canvas = null;
-  ctx = null;
-  imageData = null;
-  pixels = [];
-}
-
-// originally wrote the image processing in Python, so I want my range function back!
-// function range(start, stop, step) {
-//   if (typeof stop == "undefined") {
-//     stop = start;
-//     start = 0;
-//   }
-
-//   if (typeof step == "undefined") {
-//     step = 1;
-//   }
-
-//   if ((step > 0 && start >= stop) || (step < 0 && start <= stop)) {
-//     return [];
-//   }
-
-//   var result = [];
-//   for (var i = start; i < stop; i += step) {
-//     result.push(i);
-//   }
-
-//   return result;
-// }
-
-async function loadImage(url) {
-  return new Promise((r) => {
-    let i = new Image();
-    i.onload = () => r(i);
-    i.src = url;
-  });
-}
-
-async function getCanvas(sourceImg) {
-  canvas = document.createElement("canvas");
+function initializePixelList(canvasRef) {
+  canvas = canvasRef;
   ctx = canvas.getContext("2d", { willReadFrequently: true });
-  let img = await loadImage(sourceImg);
-  canvas.width = img.width;
-  canvas.height = img.height;
-  ctx.drawImage(img, 0, 0);
-}
-
-function removeTransparent(ratio) {
   imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  pixels = [];
   for (let i = 0; i < imageData.data.length; i += 4) {
     if (imageData.data[i + 3] != 0) {
       const pixel = {
@@ -73,11 +26,11 @@ function removeTransparent(ratio) {
       pixels.push(pixel);
     }
   }
+}
+
+function removeTransparent(ratio) {
   const newWidth = Math.floor(Math.sqrt(pixels.length) * ratio);
   const newHeight = Math.ceil(newWidth / ratio);
-
-  //   const newWidth = 12;
-  //   const newHeight = 15;
 
   console.log(newWidth + ", " + newHeight);
 
@@ -195,12 +148,8 @@ function redraw() {
   ctx.putImageData(newImageData, 0, 0);
 }
 
-export async function generate(rand, opt1, opt2, opt3, lwRatio) {
-  initialize();
-  // Load default source image
-  const sourceImg = test;
-  // Get image data from source image
-  await getCanvas(sourceImg);
+export async function generate(canvasRef, rand, opt1, opt2, opt3, lwRatio) {
+  initializePixelList(canvasRef);
   // Remove transparent pixels
   removeTransparent(lwRatio);
   // Randomize pixels.
