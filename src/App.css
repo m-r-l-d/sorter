@@ -1,0 +1,71 @@
+#root {
+  height: 100%;
+}
+
+/* .subheader {
+  color: #888;
+}
+
+.content {
+  padding: 2em;
+  display: flex;
+}
+
+.image-wrapper {
+  padding: 1em;
+  display: flex;
+  justify-content: center;
+} */
+
+canvas {
+  border-style: solid;
+  border-color: darkslategrey;
+  max-width: calc(100% - 2em - 6px);
+  margin: 0 1em;
+}
+
+.select-wrapper {
+  display: grid;
+  margin: 1em;
+}
+
+.select-wrapper > select {
+  display: block;
+  width: 100%;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 250px 1fr 250px; /* Left sidebar, main content, right sidebar */
+  grid-template-areas: "canvas-tools image-container sort-tools"; /* Named areas */
+  height: 100%;
+}
+
+.canvas-tools {
+  border-color: darkred;
+  border-style: solid;
+  grid-area: canvas-tools;
+}
+
+.sort-tools {
+  border-color: darkgreen;
+  border-style: solid;
+  grid-area: sort-tools;
+}
+
+.image-container {
+  border-color: darkblue;
+  border-style: solid;
+  grid-area: image-container;
+  place-items: center;
+}
+
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "canvas-tools"
+      "sort-tools"
+      "image-container";
+  }
+}
