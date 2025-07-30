@@ -162,7 +162,7 @@ function App() {
             accept="image/png, image/jpeg"
             onChange={handleLoadImage}
           />
-          <label style={{ display: "block" }}>
+          {/* <label style={{ display: "block" }}>
             <input
               type="range"
               min="0.2"
@@ -172,7 +172,7 @@ function App() {
               onChange={(e) => setRatio(e.target.value)}
             />
             W / H : {ratio}
-          </label>
+          </label> */}
         </div>
         <div className="sort-tools">
           <h2>sort tools</h2>
