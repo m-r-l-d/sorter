@@ -1,17 +1,26 @@
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import "./App.css";
-import { generate } from "./sort";
+import { sort } from "./sort";
 
 const checkArr = [true, false];
-const optsArr = ["l", "h", "s", "r", "g", "b", "rand", "n"];
+const optsArr = ["l", "h", "s", "r", "g", "b", "rand"];
+const initialSteps = [
+  {
+    step: 1,
+    direction: "horiz",
+    option: "l",
+  },
+  {
+    step: 2,
+    direction: "vert",
+    option: "g",
+  },
+];
 
 function ImageWrapper(props) {
   const { loading, canvasRef } = props;
-  // const width = image ? image.width : 250;
-  // const height = image ? image.height : 250;
   return (
     <div className="image-wrapper">
-      {/* {image && <img className="image" src={image} />} */}
       <canvas id="canvas" ref={canvasRef} />
     </div>
   );
@@ -21,9 +30,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [rand, setRand] = useState(true);
   const [ratio, setRatio] = useState(1);
-  const [opt1, setOpt1] = useState("h");
-  const [opt2, setOpt2] = useState("l");
-  const [opt3, setOpt3] = useState("g");
+  const [selectionSteps, setSelectionSteps] = useState(initialSteps);
   const canvasRef = useRef(null);
 
   function handleLoadImage(e) {
@@ -48,28 +55,90 @@ function App() {
     }
   }
 
-  const sortImage = async () => {
+  const sortImage = async (newSteps) => {
     setLoading(true);
     let canvas = canvasRef.current;
-    await generate(canvas, rand, opt1, opt2, opt3, ratio);
+    if (newSteps) { // this fixes desync with updating selection state from randomize function
+      await sort(canvas, rand, newSteps, ratio);
+    } else {
+      await sort(canvas, rand, selectionSteps, ratio);
+    }
     setLoading(false);
   };
 
   const randomizeOpts = async () => {
-    const newRand = checkArr[Math.floor(Math.random() * checkArr.length)];
-    const newOpt1 = optsArr[Math.floor(Math.random() * optsArr.length)];
-    const newOpt2 = optsArr[Math.floor(Math.random() * optsArr.length)];
-    const newOpt3 = optsArr[Math.floor(Math.random() * optsArr.length)];
+    let newSteps = [
+      {
+        step: 1,
+        direction: "horiz",
+        option: optsArr[Math.floor(Math.random() * optsArr.length)],
+      },
+    ];
 
-    setRand(newRand);
-    setOpt1(newOpt1);
-    setOpt2(newOpt2);
-    setOpt3(newOpt3);
+    for (let i = 0; i < Math.floor(Math.random() * 4); i++) {
+      newSteps = [
+        ...newSteps,
+        {
+          step: newSteps.length + 1,
+          direction:
+            newSteps[newSteps.length - 1].direction === "horiz"
+              ? "vert"
+              : "horiz",
+          option: optsArr[Math.floor(Math.random() * optsArr.length)],
+        },
+      ];
+    }
+    setSelectionSteps(newSteps);
+    sortImage(newSteps);
+  };
 
-    setLoading(true);
-    let canvas = canvasRef.current;
-    await generate(canvas, newRand, newOpt1, newOpt2, newOpt3, ratio);
-    setLoading(false);
+  const addStep = () => {
+    if (selectionSteps.length < 4) {
+      setSelectionSteps([
+        ...selectionSteps,
+        {
+          step: selectionSteps.length + 1,
+          direction:
+            selectionSteps[selectionSteps.length - 1].direction === "horiz"
+              ? "vert"
+              : "horiz",
+          option: optsArr[Math.floor(Math.random() * optsArr.length)],
+        },
+      ]);
+    }
+  };
+
+  const removeStep = (item) => {
+    let newSteps = selectionSteps.filter((s) => s.step !== item.step);
+    for (let i = 0; i < newSteps.length; i++) {
+      newSteps[i].step = i + 1;
+    }
+
+    setSelectionSteps(newSteps);
+  };
+
+  const updateDirection = async (index, newValue) => {
+    setSelectionSteps(
+      selectionSteps.map((step) => {
+        if (step.step === index) {
+          return { ...step, direction: newValue };
+        } else {
+          return step;
+        }
+      })
+    );
+  };
+
+  const updateOption = async (index, newValue) => {
+    setSelectionSteps(
+      selectionSteps.map((step) => {
+        if (step.step === index) {
+          return { ...step, option: newValue };
+        } else {
+          return step;
+        }
+      })
+    );
   };
 
   return (
@@ -90,7 +159,7 @@ function App() {
           <input
             type="file"
             id="fileInput"
-            accept="image/png"
+            accept="image/png, image/jpeg"
             onChange={handleLoadImage}
           />
           <label style={{ display: "block" }}>
@@ -118,48 +187,6 @@ function App() {
               />
               Randomize pixels before sorting
             </label>
-            <select
-              name="option1"
-              value={opt1}
-              onChange={(e) => setOpt1(e.target.value)}
-            >
-              <option value="l">L</option>
-              <option value="h">H</option>
-              <option value="s">S</option>
-              <option value="r">R</option>
-              <option value="g">G</option>
-              <option value="b">B</option>
-              <option value="rand">Random</option>
-              <option value="n">None</option>
-            </select>
-            <select
-              name="option2"
-              value={opt2}
-              onChange={(e) => setOpt2(e.target.value)}
-            >
-              <option value="l">L</option>
-              <option value="h">H</option>
-              <option value="s">S</option>
-              <option value="r">R</option>
-              <option value="g">G</option>
-              <option value="b">B</option>
-              <option value="rand">Random</option>
-              <option value="n">None</option>
-            </select>
-            <select
-              name="option3"
-              value={opt3}
-              onChange={(e) => setOpt3(e.target.value)}
-            >
-              <option value="l">L</option>
-              <option value="h">H</option>
-              <option value="s">S</option>
-              <option value="r">R</option>
-              <option value="g">G</option>
-              <option value="b">B</option>
-              <option value="rand">Random</option>
-              <option value="n">None</option>
-            </select>
           </div>
           <hr />
           <div style={{ alignContent: "center" }}>
@@ -173,6 +200,47 @@ function App() {
               Sort with random options
             </button>
             {loading && <p>Loading...</p>}
+
+            <div>
+              New UI test section Sorting steps
+              {selectionSteps.map((item) => {
+                return (
+                  <div>
+                    {selectionSteps.length > 1 && (
+                      <button onClick={() => removeStep(item)}>x</button>
+                    )}
+                    <select
+                      key={`${item.direction}${item.step}`}
+                      name={`${item.direction}${item.step}`}
+                      value={item.direction}
+                      onChange={(e) =>
+                        updateDirection(item.step, e.target.value)
+                      }
+                    >
+                      <option value="vert">Vertical</option>
+                      <option value="horiz">Horizontal</option>
+                    </select>
+                    <select
+                      key={`${item.option}${item.step}`}
+                      name={`${item.option}${item.step}`}
+                      value={item.option}
+                      onChange={(e) => updateOption(item.step, e.target.value)}
+                    >
+                      <option value="l">L</option>
+                      <option value="h">H</option>
+                      <option value="s">S</option>
+                      <option value="r">R</option>
+                      <option value="g">G</option>
+                      <option value="b">B</option>
+                      <option value="rand">Random</option>
+                    </select>
+                  </div>
+                );
+              })}
+              {selectionSteps.length < 4 && (
+                <button onClick={addStep}>add step</button>
+              )}
+            </div>
           </div>
         </div>
         <div className="image-container">

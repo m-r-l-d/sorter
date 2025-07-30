@@ -1,4 +1,3 @@
-import test from "./assets/test.png";
 import {
   mergeSortR,
   mergeSortB,
@@ -8,10 +7,14 @@ import {
   mergeSortL,
 } from "./mergeUtils";
 
-var canvas, ctx, imageData, pixels = null;
+var canvas,
+  ctx,
+  imageData,
+  pixels = null;
 var bgColor = [255, 255, 255];
 
 function initializePixelList(canvasRef) {
+  console.log("initializing pixel data");
   canvas = canvasRef;
   ctx = canvas.getContext("2d", { willReadFrequently: true });
   imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -28,11 +31,10 @@ function initializePixelList(canvasRef) {
   }
 }
 
-function removeTransparent(ratio) {
+function compressIntoSquare(ratio) {
+  console.log("compressing image into square");
   const newWidth = Math.floor(Math.sqrt(pixels.length) * ratio);
   const newHeight = Math.ceil(newWidth / ratio);
-
-  console.log(newWidth + ", " + newHeight);
 
   canvas.width = newWidth;
   canvas.height = newHeight;
@@ -51,8 +53,7 @@ function removeTransparent(ratio) {
   }
 }
 
-function randomize(array) {
-  // TODO make optional?
+function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -61,6 +62,7 @@ function randomize(array) {
 }
 
 function horizontalSort(option) {
+  console.log("Sorting rows by: " + option)
   const rows = [];
 
   for (let x = 0; x < pixels.length; x += canvas.width) {
@@ -84,7 +86,7 @@ function horizontalSort(option) {
     } else if (option === "b") {
       newRow = mergeSortB(row);
     } else {
-      newRow = randomize(row);
+      newRow = shuffle(row);
     }
     newRows.push(newRow);
   });
@@ -97,6 +99,7 @@ function horizontalSort(option) {
 }
 
 function verticalSort(option) {
+  console.log("Sorting columns by: " + option)
   const columns = [];
 
   for (let x = 0; x < canvas.width; x++) {
@@ -123,7 +126,7 @@ function verticalSort(option) {
     } else if (option === "b") {
       newColumn = mergeSortB(column);
     } else {
-      newColumn = randomize(column);
+      newColumn = shuffle(column);
     }
     newColumns.push(newColumn);
   });
@@ -137,6 +140,7 @@ function verticalSort(option) {
 }
 
 function redraw() {
+  console.log("Redrawing canvas from pixel array")
   const newImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   for (let i = 0; i < pixels.length; i++) {
     const pixel = pixels[i];
@@ -148,25 +152,24 @@ function redraw() {
   ctx.putImageData(newImageData, 0, 0);
 }
 
-export async function generate(canvasRef, rand, opt1, opt2, opt3, lwRatio) {
+export async function sort(canvasRef, rand, steps, lwRatio) {
   initializePixelList(canvasRef);
-  // Remove transparent pixels
-  removeTransparent(lwRatio);
-  // Randomize pixels.
+  // find a way to make this optional (if it happened in randomize step it doesn't need to happen again)
+  compressIntoSquare(lwRatio);
+
   if (rand) {
-    pixels = randomize(pixels);
+    console.log("randomizing pixels before sorting");
+    pixels = shuffle(pixels);
   }
 
-  // Sorts! (sorting 3 times really only does stuff when rand is false)
-  if (opt1 !== "n") {
-    verticalSort(opt1);
-  }
-  if (opt2 !== "n") {
-    horizontalSort(opt2);
-  }
-  if (opt3 !== "n") {
-    verticalSort(opt3);
-  }
+  steps.forEach((step) => {
+    if (step.direction == "horiz") {
+      horizontalSort(step.option);
+    } else {
+      verticalSort(step.option);
+    }
+  });
+
   redraw();
   return canvas.toDataURL();
 }
